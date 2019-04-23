@@ -3,7 +3,57 @@ const BASE_URL = 'https://jsonplaceholder.typicode.com';
 let usersDivEl;
 let postsDivEl;
 let loadButtonEl;
-let albumDivEl;
+let commentsDivEl;
+
+function onLoadComments() {
+    const el = this;
+    const postId = el.getAttribute("data-post-id");
+
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', onCommentReceived);
+    xhr.open('GET', BASE_URL + '/comments?postId=' + postId);
+    xhr.send();
+}
+
+function onCommentReceived() {
+    commentsDivEl.style.display = 'block';
+
+    const text = this.responseText;
+    const comments = JSON.parse(text);
+
+    const divEl = document.getElementById('comments-content');
+    while (divEl.firstChild) {
+        divEl.removeChild(divEl.firstChild);
+    }
+    divEl.appendChild(createComments(comments));
+}
+
+function createComments(comments) {
+    const ulEl = document.createElement('ul');
+
+    for (let i = 0; i < comments.length; i++) {
+        const comment = comments[i];
+
+        // creating paragraph
+        const strongEl = document.createElement('strong');
+        strongEl.textContent = comment.title;
+
+        const dataCommentIdAttr = document.createAttribute("data-comment-id");
+        dataCommentIdAttr.value = comment.id;
+
+        const pEl = document.createElement('p');
+        pEl.appendChild(strongEl);
+        pEl.appendChild(document.createTextNode(`: ${comment.body}`));
+
+        // creating list item
+        const liEl = document.createElement('li');
+        liEl.appendChild(pEl);
+
+        ulEl.appendChild(liEl);
+
+    }
+    return ulEl;
+}
 
 function createPostsList(posts) {
     const ulEl = document.createElement('ul');
@@ -15,6 +65,9 @@ function createPostsList(posts) {
         const strongEl = document.createElement('strong');
         strongEl.textContent = post.title;
 
+        const dataPostIdAttr = document.createAttribute("data-post-id");
+        dataPostIdAttr.value = post.id;
+
         const pEl = document.createElement('p');
         pEl.appendChild(strongEl);
         pEl.appendChild(document.createTextNode(`: ${post.body}`));
@@ -24,8 +77,13 @@ function createPostsList(posts) {
         liEl.appendChild(pEl);
 
         ulEl.appendChild(liEl);
-    }
 
+        const buttonEl = document.createElement('button');
+        buttonEl.textContent = "View comments";
+        buttonEl.setAttributeNode(dataPostIdAttr);
+        buttonEl.addEventListener('click', onLoadComments);
+        ulEl.appendChild(buttonEl);
+    }
     return ulEl;
 }
 
@@ -97,7 +155,6 @@ function createUsersTableBody(users) {
 
         tbodyEl.appendChild(trEl);
     }
-
     return tbodyEl;
 }
 
@@ -128,6 +185,7 @@ function onLoadUsers() {
 document.addEventListener('DOMContentLoaded', (event) => {
     usersDivEl = document.getElementById('users');
     postsDivEl = document.getElementById('posts');
+    commentsDivEl = document.getElementById('comments');
     loadButtonEl = document.getElementById('load-users');
     loadButtonEl.addEventListener('click', onLoadUsers);
 });
